@@ -1,0 +1,539 @@
+// Tourism Management System Schema for dbdiagram.io
+
+// User Management
+Table Users {
+  UserID int [pk, increment]
+  Email varchar [unique, not null]
+  PasswordHash varchar [not null]
+  PasswordSalt varchar [not null]
+  FirstName varchar [not null]
+  LastName varchar [not null]
+  Phone varchar
+  CountryID int
+  UserType int [not null] // 1=Client, 2=Admin, 3=Guide, 4=HotelManager, 5=TaxiAgent, 6=RestaurantManager, 7=TravelAgencyRep
+  RegistrationDate datetime [default: `now()`]
+  LastLoginDate datetime
+  Status int [default: 1] // 1=Active, 0=Inactive
+  ProfileImageURL varchar
+  PreferredLanguage varchar [default: 'en']
+  IsEmailVerified boolean [default: false]
+  IsPhoneVerified boolean [default: false]
+  CreatedAt datetime [default: `now()`]
+  UpdatedAt datetime [default: `now()`]
+}
+
+// Location Management
+Table Countries {
+  CountryID int [pk, increment]
+  CountryName varchar [not null]
+  CountryCode varchar [not null]
+  ContinentCode varchar
+  PhoneCode varchar
+  IsActive boolean [default: true]
+}
+
+Table Cities {
+  CityID int [pk, increment]
+  CountryID int [not null, ref: > Countries.CountryID]
+  CityName varchar [not null]
+  IsPopular boolean [default: false]
+  Description text
+}
+
+Table Locations {
+  LocationID int [pk, increment]
+  LocationName varchar [not null]
+  CityID int [not null, ref: > Cities.CityID]
+  Description text
+  Latitude decimal(10,7)
+  Longitude decimal(10,7)
+  IsPopular boolean [default: false]
+  CreatedAt datetime [default: `now()`]
+  UpdatedAt datetime [default: `now()`]
+}
+
+// Tour Management
+Table TourCategories {
+  CategoryID int [pk, increment]
+  CategoryName varchar [not null]
+  Description text
+  ParentCategoryID int [ref: > TourCategories.CategoryID]
+  IconURL varchar
+  DisplayOrder int [default: 0]
+  IsActive boolean [default: true]
+}
+
+Table Tours {
+  TourID int [pk, increment]
+  TourName varchar [not null]
+  Description text
+  ShortDescription varchar
+  LocationID int [not null, ref: > Locations.LocationID]
+  DurationHours decimal(5,2)
+  DurationDays int
+  BasePrice decimal(10,2) [not null]
+  DiscountPercentage decimal(5,2) [default: 0]
+  MaxCapacity int [not null]
+  MinParticipants int [default: 1]
+  DifficultyLevel int [default: 1] // 1=Easy, 2=Moderate, 3=Difficult
+  AverageRating decimal(3,2) [default: 0]
+  TotalRatings int [default: 0]
+  MainImageURL varchar
+  IsActive boolean [default: true]
+  IsFeatured boolean [default: false]
+  CreatedBy int [not null, ref: > Users.UserID]
+  CreatedAt datetime [default: `now()`]
+  UpdatedAt datetime [default: `now()`]
+}
+
+Table TourImages {
+  ImageID int [pk, increment]
+  TourID int [not null, ref: > Tours.TourID]
+  ImageURL varchar [not null]
+  DisplayOrder int [default: 0]
+  Caption varchar
+  IsActive boolean [default: true]
+}
+
+Table TourCategoryMapping {
+  MappingID int [pk, increment]
+  TourID int [not null, ref: > Tours.TourID]
+  CategoryID int [not null, ref: > TourCategories.CategoryID]
+  
+  indexes {
+    (TourID, CategoryID) [unique]
+  }
+}
+
+Table TourSchedules {
+  ScheduleID int [pk, increment]
+  TourID int [not null, ref: > Tours.TourID]
+  StartDate date [not null]
+  EndDate date
+  StartTime time
+  AvailableSpots int [not null]
+  Price decimal(10,2)
+  IsActive boolean [default: true]
+}
+
+// Hotel Management
+Table Hotels {
+  HotelID int [pk, increment]
+  HotelName varchar [not null]
+  Description text
+  LocationID int [not null, ref: > Locations.LocationID]
+  StarRating int
+  CheckInTime time
+  CheckOutTime time
+  AverageRating decimal(3,2) [default: 0]
+  TotalRatings int [default: 0]
+  MainImageURL varchar
+  Website varchar
+  Phone varchar
+  Email varchar
+  IsActive boolean [default: true]
+  IsFeatured boolean [default: false]
+  ManagerID int [ref: > Users.UserID]
+  CreatedAt datetime [default: `now()`]
+  UpdatedAt datetime [default: `now()`]
+}
+
+Table HotelImages {
+  ImageID int [pk, increment]
+  HotelID int [not null, ref: > Hotels.HotelID]
+  ImageURL varchar [not null]
+  DisplayOrder int [default: 0]
+  Caption varchar
+  IsActive boolean [default: true]
+}
+
+Table HotelAmenities {
+  AmenityID int [pk, increment]
+  AmenityName varchar [not null]
+  IconURL varchar
+  IsActive boolean [default: true]
+}
+
+Table HotelAmenityMapping {
+  MappingID int [pk, increment]
+  HotelID int [not null, ref: > Hotels.HotelID]
+  AmenityID int [not null, ref: > HotelAmenities.AmenityID]
+  
+  indexes {
+    (HotelID, AmenityID) [unique]
+  }
+}
+
+Table RoomTypes {
+  RoomTypeID int [pk, increment]
+  HotelID int [not null, ref: > Hotels.HotelID]
+  RoomTypeName varchar [not null]
+  Description text
+  MaxOccupancy int [not null]
+  BasePrice decimal(10,2) [not null]
+  DiscountPercentage decimal(5,2) [default: 0]
+  Size varchar
+  BedType varchar
+  ImageURL varchar
+  IsActive boolean [default: true]
+}
+
+Table RoomAvailability {
+  AvailabilityID int [pk, increment]
+  RoomTypeID int [not null, ref: > RoomTypes.RoomTypeID]
+  Date date [not null]
+  AvailableRooms int [not null]
+  Price decimal(10,2)
+  IsBlocked boolean [default: false]
+}
+
+// Restaurant Management
+Table Restaurants {
+  RestaurantID int [pk, increment]
+  RestaurantName varchar [not null]
+  Description text
+  LocationID int [not null, ref: > Locations.LocationID]
+  Cuisine varchar
+  PriceRange int // 1=Inexpensive, 2=Moderate, 3=Expensive, 4=Very Expensive
+  OpeningTime time
+  ClosingTime time
+  AverageRating decimal(3,2) [default: 0]
+  TotalRatings int [default: 0]
+  MainImageURL varchar
+  Website varchar
+  Phone varchar
+  Email varchar
+  HasReservation boolean [default: true]
+  IsActive boolean [default: true]
+  IsFeatured boolean [default: false]
+  ManagerID int [ref: > Users.UserID]
+  CreatedAt datetime [default: `now()`]
+  UpdatedAt datetime [default: `now()`]
+}
+
+Table RestaurantImages {
+  ImageID int [pk, increment]
+  RestaurantID int [not null, ref: > Restaurants.RestaurantID]
+  ImageURL varchar [not null]
+  DisplayOrder int [default: 0]
+  Caption varchar
+  IsActive boolean [default: true]
+}
+
+Table MenuCategories {
+  CategoryID int [pk, increment]
+  RestaurantID int [not null, ref: > Restaurants.RestaurantID]
+  CategoryName varchar [not null]
+  Description text
+  DisplayOrder int [default: 0]
+  IsActive boolean [default: true]
+}
+
+Table MenuItems {
+  ItemID int [pk, increment]
+  CategoryID int [not null, ref: > MenuCategories.CategoryID]
+  ItemName varchar [not null]
+  Description text
+  Price decimal(10,2) [not null]
+  IsVegetarian boolean [default: false]
+  IsVegan boolean [default: false]
+  IsGlutenFree boolean [default: false]
+  Spiciness int // 0=Not Spicy, 1=Mild, 2=Medium, 3=Hot
+  ImageURL varchar
+  IsActive boolean [default: true]
+  IsFeatured boolean [default: false]
+}
+
+Table RestaurantTables {
+  TableID int [pk, increment]
+  RestaurantID int [not null, ref: > Restaurants.RestaurantID]
+  TableNumber varchar [not null]
+  Capacity int [not null]
+  Location varchar // Indoor, Outdoor, Private
+  IsActive boolean [default: true]
+}
+
+// Taxi Service Management
+Table TaxiServices {
+  TaxiServiceID int [pk, increment]
+  ServiceName varchar [not null]
+  Description text
+  LocationID int [not null, ref: > Locations.LocationID]
+  AverageRating decimal(3,2) [default: 0]
+  TotalRatings int [default: 0]
+  LogoURL varchar
+  Website varchar
+  Phone varchar
+  Email varchar
+  IsActive boolean [default: true]
+  ManagerID int [ref: > Users.UserID]
+  CreatedAt datetime [default: `now()`]
+  UpdatedAt datetime [default: `now()`]
+}
+
+Table VehicleTypes {
+  VehicleTypeID int [pk, increment]
+  TaxiServiceID int [not null, ref: > TaxiServices.TaxiServiceID]
+  TypeName varchar [not null]
+  Description text
+  MaxPassengers int [not null]
+  PricePerKm decimal(10,2) [not null]
+  BasePrice decimal(10,2) [not null]
+  ImageURL varchar
+  IsActive boolean [default: true]
+}
+
+Table Vehicles {
+  VehicleID int [pk, increment]
+  TaxiServiceID int [not null, ref: > TaxiServices.TaxiServiceID]
+  VehicleTypeID int [not null, ref: > VehicleTypes.VehicleTypeID]
+  RegistrationNumber varchar [not null]
+  Model varchar
+  Year int
+  Color varchar
+  IsActive boolean [default: true]
+}
+
+Table Drivers {
+  DriverID int [pk, increment]
+  UserID int [not null, ref: > Users.UserID]
+  TaxiServiceID int [not null, ref: > TaxiServices.TaxiServiceID]
+  LicenseNumber varchar [not null]
+  ExperienceYears int
+  Rating decimal(3,2) [default: 0]
+  IsActive boolean [default: true]
+}
+
+// Travel Agency Management
+Table TravelAgencies {
+  AgencyID int [pk, increment]
+  AgencyName varchar [not null]
+  Description text
+  LocationID int [not null, ref: > Locations.LocationID]
+  AverageRating decimal(3,2) [default: 0]
+  TotalRatings int [default: 0]
+  LogoURL varchar
+  Website varchar
+  Phone varchar
+  Email varchar
+  IsActive boolean [default: true]
+  ManagerID int [ref: > Users.UserID]
+  CreatedAt datetime [default: `now()`]
+  UpdatedAt datetime [default: `now()`]
+}
+
+Table TravelPackages {
+  PackageID int [pk, increment]
+  AgencyID int [not null, ref: > TravelAgencies.AgencyID]
+  PackageName varchar [not null]
+  Description text
+  DurationDays int [not null]
+  BasePrice decimal(10,2) [not null]
+  DiscountPercentage decimal(5,2) [default: 0]
+  MaxParticipants int
+  AverageRating decimal(3,2) [default: 0]
+  TotalRatings int [default: 0]
+  MainImageURL varchar
+  IsActive boolean [default: true]
+  IsFeatured boolean [default: false]
+  CreatedAt datetime [default: `now()`]
+  UpdatedAt datetime [default: `now()`]
+}
+
+Table PackageDestinations {
+  DestinationID int [pk, increment]
+  PackageID int [not null, ref: > TravelPackages.PackageID]
+  LocationID int [not null, ref: > Locations.LocationID]
+  DayNumber int [not null]
+  Description text
+  Duration varchar
+}
+
+Table PackageInclusions {
+  InclusionID int [pk, increment]
+  PackageID int [not null, ref: > TravelPackages.PackageID]
+  InclusionType int [not null] // 1=Tour, 2=Hotel, 3=Transport, 4=Meal, 5=Other
+  Description varchar [not null]
+  IsHighlighted boolean [default: false]
+}
+
+// Booking Management
+Table Bookings {
+  BookingID int [pk, increment]
+  BookingReference varchar [unique, not null]
+  UserID int [not null, ref: > Users.UserID]
+  BookingType int [not null] // 1=Tour, 2=Hotel, 3=Taxi, 4=Restaurant, 5=Package
+  BookingDate datetime [default: `now()`]
+  Status int [default: 1] // 1=Pending, 2=Confirmed, 3=Cancelled, 4=Completed
+  TotalPrice decimal(10,2) [not null]
+  DiscountAmount decimal(10,2) [default: 0]
+  PaymentStatus int [default: 1] // 1=Pending, 2=Paid, 3=Refunded, 4=Failed
+  SpecialRequests text
+  CancellationReason text
+  LastUpdated datetime [default: `now()`]
+}
+
+Table TourBookings {
+  TourBookingID int [pk, increment]
+  BookingID int [not null, ref: > Bookings.BookingID]
+  TourID int [not null, ref: > Tours.TourID]
+  ScheduleID int [not null, ref: > TourSchedules.ScheduleID]
+  NumberOfAdults int [not null, default: 1]
+  NumberOfChildren int [not null, default: 0]
+  GuideID int [ref: > Users.UserID]
+}
+
+Table HotelBookings {
+  HotelBookingID int [pk, increment]
+  BookingID int [not null, ref: > Bookings.BookingID]
+  HotelID int [not null, ref: > Hotels.HotelID]
+  RoomTypeID int [not null, ref: > RoomTypes.RoomTypeID]
+  CheckInDate date [not null]
+  CheckOutDate date [not null]
+  NumberOfRooms int [not null, default: 1]
+  NumberOfGuests int [not null]
+}
+
+Table RestaurantBookings {
+  RestaurantBookingID int [pk, increment]
+  BookingID int [not null, ref: > Bookings.BookingID]
+  RestaurantID int [not null, ref: > Restaurants.RestaurantID]
+  TableID int [ref: > RestaurantTables.TableID]
+  ReservationDate date [not null]
+  ReservationTime time [not null]
+  NumberOfGuests int [not null]
+  Duration int [default: 120] // Duration in minutes
+}
+
+Table TaxiBookings {
+  TaxiBookingID int [pk, increment]
+  BookingID int [not null, ref: > Bookings.BookingID]
+  TaxiServiceID int [not null, ref: > TaxiServices.TaxiServiceID]
+  VehicleTypeID int [not null, ref: > VehicleTypes.VehicleTypeID]
+  PickupLocationID int [not null, ref: > Locations.LocationID]
+  DropoffLocationID int [not null, ref: > Locations.LocationID]
+  PickupDateTime datetime [not null]
+  EstimatedDistance decimal(10,2)
+  DriverID int [ref: > Drivers.DriverID]
+  VehicleID int [ref: > Vehicles.VehicleID]
+}
+
+Table PackageBookings {
+  PackageBookingID int [pk, increment]
+  BookingID int [not null, ref: > Bookings.BookingID]
+  PackageID int [not null, ref: > TravelPackages.PackageID]
+  StartDate date [not null]
+  NumberOfAdults int [not null, default: 1]
+  NumberOfChildren int [not null, default: 0]
+}
+
+// Payment Management
+Table Payments {
+  PaymentID int [pk, increment]
+  BookingID int [not null, ref: > Bookings.BookingID]
+  PaymentReference varchar [unique, not null]
+  Amount decimal(10,2) [not null]
+  PaymentDate datetime [default: `now()`]
+  PaymentMethod int [not null] // 1=Credit Card, 2=PayPal, 3=Bank Transfer
+  TransactionID varchar
+  Status int [default: 1] // 1=Pending, 2=Success, 3=Failed, 4=Refunded
+  GatewayResponse text
+  RefundAmount decimal(10,2) [default: 0]
+  RefundDate datetime
+  RefundReason text
+}
+
+// Rating and Feedback
+Table Ratings {
+  RatingID int [pk, increment]
+  UserID int [not null, ref: > Users.UserID]
+  BookingID int [not null, ref: > Bookings.BookingID]
+  RatingType int [not null] // 1=Tour, 2=Hotel, 3=Taxi, 4=Restaurant, 5=Package, 6=Guide, 7=Driver
+  EntityID int [not null] // TourID, HotelID, TaxiServiceID, RestaurantID, PackageID, GuideID, DriverID
+  Rating int [not null]
+  Comment text
+  RatingDate datetime [default: `now()`]
+  IsVisible boolean [default: true]
+  AdminResponse text
+  
+  indexes {
+    (UserID, BookingID, RatingType) [unique]
+  }
+}
+
+Table Feedback {
+  FeedbackID int [pk, increment]
+  UserID int [ref: > Users.UserID]
+  FeedbackText text [not null]
+  FeedbackDate datetime [default: `now()`]
+  FeedbackType int [not null] // 1=App, 2=Service, 3=Other
+  Status int [default: 1] // 1=Unread, 2=Read, 3=Responded
+  ResponseText text
+  ResponseDate datetime
+  RespondedBy int [ref: > Users.UserID]
+}
+
+// Promotions and Marketing
+Table Promotions {
+  PromotionID int [pk, increment]
+  PromotionCode varchar [unique, not null]
+  Description text
+  DiscountType int [not null] // 1=Percentage, 2=Fixed Amount
+  DiscountValue decimal(10,2) [not null]
+  MinimumPurchase decimal(10,2) [default: 0]
+  StartDate datetime [not null]
+  EndDate datetime [not null]
+  UsageLimit int
+  CurrentUsage int [default: 0]
+  ApplicableType int // 1=All, 2=Tour, 3=Hotel, 4=Taxi, 5=Restaurant, 6=Package
+  IsActive boolean [default: true]
+  CreatedBy int [not null, ref: > Users.UserID]
+  CreatedAt datetime [default: `now()`]
+}
+
+Table Wishlist {
+  WishlistID int [pk, increment]
+  UserID int [not null, ref: > Users.UserID]
+  ItemType int [not null] // 1=Tour, 2=Hotel, 3=Restaurant, 4=Package
+  ItemID int [not null]
+  AddedDate datetime [default: `now()`]
+  
+  indexes {
+    (UserID, ItemType, ItemID) [unique]
+  }
+}
+
+// System Management
+Table Notifications {
+  NotificationID int [pk, increment]
+  UserID int [not null, ref: > Users.UserID]
+  Title varchar [not null]
+  Message text [not null]
+  NotificationType int [not null] // 1=Booking, 2=Payment, 3=Tour, 4=System
+  ReferenceID int
+  IsRead boolean [default: false]
+  CreatedAt datetime [default: `now()`]
+}
+
+Table UserSessions {
+  SessionID int [pk, increment]
+  UserID int [not null, ref: > Users.UserID]
+  SessionToken varchar [not null]
+  IPAddress varchar
+  DeviceInfo varchar
+  LoginTime datetime [default: `now()`]
+  LogoutTime datetime
+  IsActive boolean [default: true]
+}
+
+Table AuditLog {
+  LogID int [pk, increment]
+  UserID int [ref: > Users.UserID]
+  EntityType varchar [not null]
+  EntityID int [not null]
+  Action varchar [not null]
+  OldValues text
+  NewValues text
+  IPAddress varchar
+  LogDate datetime [default: `now()`]
+}
