@@ -537,3 +537,51 @@ Table AuditLog {
   IPAddress varchar
   LogDate datetime [default: `now()`]
 }
+
+Table UserRanks {  
+  RankID int [pk, increment]  
+  UserID int [ref: > Users.UserID]  
+  RankName varchar  // e.g., "Gold", "Platinum"  
+  PointsEarned int  
+}  
+Table TourTranslations {  
+  TranslationID int [pk, increment]  
+  TourID int [ref: > Tours.TourID]  
+  LanguageCode varchar  
+  TranslatedDescription text  
+}  
+Table Partnerships {  
+  PartnershipID int [pk, increment]  
+  GuideID int [ref: > Users.UserID]  
+  HotelID int [ref: > Hotels.HotelID]  
+  RestaurantID int [ref: > Restaurants.RestaurantID]  
+  TaxiServiceID int [ref: > TaxiServices.TaxiServiceID]  
+  DiscountPercentage decimal(5,2)  
+}  
+
+// SQL Views (Add these as documentation comments)
+// -------------------------------------------------
+// View: TourParticipants
+// Purpose: Show participants for each tour
+/*
+CREATE VIEW TourParticipants AS
+SELECT T.TourID, U.FirstName, U.LastName
+FROM Tours T
+JOIN TourBookings TB ON T.TourID = TB.TourID
+JOIN Users U ON TB.BookingID = U.UserID;
+*/
+
+// View: HotelEarnings
+// Purpose: Track total earnings per hotel
+/*
+CREATE VIEW HotelEarnings AS
+SELECT H.HotelID, SUM(P.Amount) AS TotalEarnings
+FROM Hotels H
+JOIN HotelBookings HB ON H.HotelID = HB.HotelID
+JOIN Bookings B ON HB.BookingID = B.BookingID
+JOIN Payments P ON B.BookingID = P.BookingID
+GROUP BY H.HotelID;
+*/
+Ref: "PackageDestinations"."PackageID" < "PackageDestinations"."DestinationID"
+
+Ref: "TaxiBookings"."BookingID" < "TaxiBookings"."VehicleID"
