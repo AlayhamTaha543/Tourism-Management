@@ -6,43 +6,94 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class User extends Authenticatable
 {
-    /** @use HasFactory<\Database\Factories\UserFactory> */
     use HasFactory, Notifiable;
+
+    /**
+     * The table associated with the model.
+     *
+     * @var string
+     */
+    protected $table = 'users';
+
+    /**
+     * The primary key associated with the table.
+     *
+     * @var string
+     */
+    protected $primaryKey = 'UserID';
 
     /**
      * The attributes that are mass assignable.
      *
-     * @var list<string>
+     * @var array<int, string>
      */
     protected $fillable = [
-        'name',
-        'email',
-        'password',
+        'Email',
+        'PasswordHash',
+        'PasswordSalt',
+        'FirstName',
+        'LastName',
+        'Phone',
+        'CountryID',
+        'UserType',
+        'RegistrationDate',
+        'LastLoginDate',
+        'Status',
+        'ProfileImageURL',
+        'PreferredLanguage',
+        'IsEmailVerified',
+        'IsPhoneVerified',
     ];
 
     /**
      * The attributes that should be hidden for serialization.
      *
-     * @var list<string>
+     * @var array<int, string>
      */
     protected $hidden = [
-        'password',
+        'PasswordHash',
+        'PasswordSalt',
         'remember_token',
     ];
 
     /**
-     * Get the attributes that should be cast.
+     * The attributes that should be cast.
      *
-     * @return array<string, string>
+     * @var array<string, string>
      */
-    protected function casts(): array
+    protected $casts = [
+        'RegistrationDate' => 'datetime',
+        'LastLoginDate' => 'datetime',
+        'IsEmailVerified' => 'boolean',
+        'IsPhoneVerified' => 'boolean',
+    ];
+
+    /**
+     * Get the country that owns the user.
+     */
+    public function country(): BelongsTo
     {
-        return [
-            'email_verified_at' => 'datetime',
-            'password' => 'hashed',
-        ];
+        return $this->belongsTo(Country::class, 'CountryID', 'CountryID');
+    }
+
+    /**
+     * Get the tours created by the user.
+     */
+    public function createdTours(): HasMany
+    {
+        return $this->hasMany(Tour::class, 'CreatedBy', 'UserID');
+    }
+
+    /**
+     * Get the bookings for the user.
+     */
+    public function bookings(): HasMany
+    {
+        return $this->hasMany(Booking::class, 'UserID', 'UserID');
     }
 }

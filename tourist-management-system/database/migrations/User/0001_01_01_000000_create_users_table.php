@@ -20,7 +20,8 @@ return new class extends Migration
             $table->string('LastName')->notNull();
             $table->string('Phone')->nullable();
             $table->integer('CountryID')->nullable();
-            $table->integer('UserType')->notNull()->comment('1=Client, 2=Admin, 3=Guide, 4=HotelManager, 5=TaxiAgent, 6=RestaurantManager, 7=TravelAgencyRep');
+
+            $table->enum('UserType',['Client','Admin','Guide','HotelManager','TaxiAgent','RestaurantManager','TravelAgencyRep'])->notNull()->comment('1=Client, 2=Admin, 3=Guide, 4=HotelManager, 5=TaxiAgent, 6=RestaurantManager, 7=TravelAgencyRep');
             $table->dateTime('RegistrationDate')->default(now());
             $table->dateTime('LastLoginDate')->nullable();
             $table->integer('Status')->default(1)->comment('1=Active, 0=Inactive');
